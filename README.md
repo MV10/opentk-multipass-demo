@@ -6,6 +6,8 @@ Note this assumes at least OpenGL 4.6 availability (which means it'll work on Wi
 
 This demo is a stack of five frag shaders using three framebuffers. The vertex shader is a simple pair of triangles that covers the entire display window. The frag shaders are mostly adapted from Shadertoy content.
 
+![image](https://github.com/MV10/opentk-multipass-demo/assets/794270/bb948f00-0bc4-4040-9ca0-082e005bdc3f)
+
 By default all five passes are output. You can hit the spacebar to short-circuit the shader passes and output the results of each stage.
 
 The first pass renders a colorful plasma field to framebuffer 0.
