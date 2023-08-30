@@ -20,12 +20,17 @@ internal partial class Win : GameWindow, IDisposable
     List<(int hBuffer, int hTexture)> framebuffer = new();
     Stopwatch Clock = new();
 
+    int viewPass = 5;
+
     public Win(GameWindowSettings gameWindow, NativeWindowSettings nativeWindow)
         : base(gameWindow, nativeWindow)
     {
         GL.Khr.DebugMessageCallback(DebugMessageDelegate, IntPtr.Zero);
         GL.Enable(EnableCap.DebugOutput);
         GL.Enable(EnableCap.DebugOutputSynchronous);
+
+        Console.WriteLine("\nDemonstrates five shader passes. Press any key to change which pass is rendered.\n\n");
+        Console.WriteLine($"Window output is shader-pass {viewPass} of 5.");
 
         Clock.Start();
     }
@@ -70,6 +75,7 @@ internal partial class Win : GameWindow, IDisposable
         var time = (float)Clock.Elapsed.TotalSeconds;
 
         // pass1-plasma
+        var outputBuffer = 0;
         GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[0].hBuffer);
         GL.Clear(ClearBufferMask.ColorBufferBit);
         shaders[0].SetUniform("resolution", res);
@@ -77,37 +83,53 @@ internal partial class Win : GameWindow, IDisposable
         frameData.Draw();
 
         // pass2-desaturate
-        GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[1].hBuffer);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        shaders[1].SetUniform("resolution", res);
-        shaders[1].SetTexture("input0", framebuffer[0].hTexture, TextureUnit.Texture0);
-        frameData.Draw();
+        if(viewPass > 1)
+        {
+            outputBuffer = 1;
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[1].hBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            shaders[1].SetUniform("resolution", res);
+            shaders[1].SetTexture("input0", framebuffer[0].hTexture, TextureUnit.Texture0);
+            frameData.Draw();
+        }
 
         // pass3-sobel
-        GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[2].hBuffer);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        shaders[2].SetUniform("resolution", res);
-        shaders[2].SetTexture("input1", framebuffer[1].hTexture, TextureUnit.Texture0);
-        frameData.Draw();
+        if(viewPass > 2)
+        {
+            outputBuffer = 2;
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[2].hBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            shaders[2].SetUniform("resolution", res);
+            shaders[2].SetTexture("input1", framebuffer[1].hTexture, TextureUnit.Texture0);
+            frameData.Draw();
+        }
 
         // pass4-clouds
-        GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[1].hBuffer);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        shaders[3].SetUniform("resolution", res);
-        shaders[3].SetUniform("time", time);
-        shaders[3].SetTexture("input2", framebuffer[2].hTexture, TextureUnit.Texture0);
-        frameData.Draw();
+        if(viewPass > 3)
+        {
+            outputBuffer = 1;
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[1].hBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            shaders[3].SetUniform("resolution", res);
+            shaders[3].SetUniform("time", time);
+            shaders[3].SetTexture("input2", framebuffer[2].hTexture, TextureUnit.Texture0);
+            frameData.Draw();
+        }
 
         // pass5-colorize
-        GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[2].hBuffer);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        shaders[4].SetUniform("resolution", res);
-        shaders[4].SetTexture("input0", framebuffer[0].hTexture, TextureUnit.Texture0);
-        shaders[4].SetTexture("input1", framebuffer[1].hTexture, TextureUnit.Texture1);
-        frameData.Draw();
+        if(viewPass > 4)
+        {
+            outputBuffer = 2;
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, framebuffer[2].hBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            shaders[4].SetUniform("resolution", res);
+            shaders[4].SetTexture("input0", framebuffer[0].hTexture, TextureUnit.Texture0);
+            shaders[4].SetTexture("input1", framebuffer[1].hTexture, TextureUnit.Texture1);
+            frameData.Draw();
+        }
 
         GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-        GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, framebuffer[2].hBuffer);
+        GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, framebuffer[outputBuffer].hBuffer);
         GL.BlitFramebuffer(
             0, 0, ClientSize.X, ClientSize.Y,
             0, 0, ClientSize.X, ClientSize.Y,
@@ -137,6 +159,13 @@ internal partial class Win : GameWindow, IDisposable
         if (input.IsKeyReleased(Keys.Escape))
         {
             Close();
+            return;
+        }
+
+        if (input.IsKeyReleased(Keys.Space))
+        {
+            viewPass = ++viewPass == 6 ? 1 : viewPass;
+            Console.WriteLine($"Window output is shader-pass {viewPass} of 5.");
             return;
         }
     }
