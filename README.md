@@ -2,6 +2,8 @@
 
 An example of using OpenGL framebuffers to perform post-processing with multiple shader passes using the .NET [OpenTK](https://github.com/opentk) library. This does use my [eyecandy](https://github.com/MV10/eyecandy) library, but only as a convenience to avoid duplicating the simple `Shader` class (basically it compiles the shaders and has a few helper functions to set attributes and uniforms).
 
+Note this assumes at least OpenGL 4.6 availability (which means it'll work on Windows and Linux, but not Mac or low-spec devices like the Raspberry Pi.)
+
 This demo is a stack of five frag shaders using three framebuffers. The vertex shader is a simple pair of triangles that covers the entire display window. The frag shaders are mostly adapted from Shadertoy content.
 
 By default all five passes are output. You can hit the spacebar to short-circuit the shader passes and output the results of each stage.
